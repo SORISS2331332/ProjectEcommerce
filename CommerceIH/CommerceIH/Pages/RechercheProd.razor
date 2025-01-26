@@ -1,0 +1,61 @@
+﻿@page "/RechercheProd/{input}"
+@inject NavigationManager Navigation
+@inject PanierService panierService
+@inject Recherche recherche
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private List<Article> articles;
+
+    [Parameter]
+    public string input { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        articles = new();
+
+        articles = await recherche.RechercherAsync(input);
+    }
+
+    private async Task PanierAjout(int codeArticle)
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        panierService.AjoutPanier(codeUser, codeArticle);
+    }
+
+    private async Task Details(int codeArticle)
+    {
+        string articleDetails = "/details/" + codeArticle;
+        Navigation.NavigateTo(articleDetails);
+    }
+}
+
+<div class="article-list">
+    @if (articles != null && articles.Any()) //Si la liste est non null et non vide
+    {
+        foreach (var article in articles)
+        {
+            <div class="article-item">
+                <img src=@article.LienImage alt="Alternate Text" class="article-image" />
+                <h2 class="titre">@article.Nom</h2>
+                <p class="prix">Prix: <span>@article.PrixUnitaire $</span></p>
+
+                <!--Ici, on peut accéder directement au vendeur de l'article car Blazor crée des liens entre les tables connectées par clés
+                    étrangères grâces aux propriétés virtuelles présentes dans nos modèles
+                -->
+                <p class="vendeur">Vendeur: <span>@article.VendeurNavigation.Nom @article.VendeurNavigation.Prenom</span></p>
+                <div>
+                    <button @onclick="() => PanierAjout(article.Code)" class="btn btn-success">Ajouter au panier</button>
+                    <button @onclick="() => Details(article.Code)" class="btn btn-info">Détails</button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <h2 class="text-black text-center">Vous n'avez aucun article en ligne </h2>
+    }
+</div>

@@ -1,0 +1,59 @@
+﻿<!--Déclaration du paramètre passé en get dans MesArticles (Modifier)-->
+@page "/SupprimerProduit/{id:int}"
+@inject AjoutProduitService ajoutProduitService
+@inject NavigationManager Nav
+@inject IJSRuntime js
+
+    <h2 class="text-black text-center">Voulez vous supprimer cet article ?</h2>
+    <a class="btn btn-danger" @onclick="Supprimer">Oui</a>
+    <a class="btn btn-primary" href="/MesArticles">Retour</a>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    [Parameter]
+    public int Id { get; set; } //Récupération de l'id de l'article passé en get dans la page MesArticles
+
+    private Article article { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        article = new();
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+
+        //Appelle de la fonction qui récupère l'article dans le service AjouterProduitService
+        article = await ajoutProduitService.GetArticleAsync(Id, email);
+
+    }
+
+
+
+
+
+    public async Task Supprimer()
+    {
+        try
+        {
+            var cheminDossierImg = Path.Combine("wwwroot", article.LienImage);
+
+            File.Delete(cheminDossierImg);
+
+            //Appel de la fonction qui met à jour les informations l'article dans le service AjouterProduitService
+            await ajoutProduitService.SupprimerArticle(Id);
+            string message = "Article supprimer avec succès !";
+            await js.InvokeVoidAsync("alert",message);
+            Nav.NavigateTo("/MesArticles", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+
+
+    }
+
+}

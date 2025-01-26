@@ -1,0 +1,82 @@
+﻿@page "/Panier"
+@inject PanierService panierService
+@inject NavigationManager Navigation
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private List<Article> articles;
+    private decimal total = 0;
+
+    private async Task Details(int codeArticle)
+    {
+        string articleDetails = "/details/" + codeArticle;
+        Navigation.NavigateTo(articleDetails);
+    }
+
+    private async Task PanierAjout(int codeArticle)
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        panierService.AjoutPanier(codeUser, codeArticle);
+    }
+
+    private async Task PanierRetirer(int codeArticle)
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        panierService.RetirerPanier(codeUser, codeArticle);
+        Navigation.NavigateTo("/Panier", true);
+    }
+
+    private async Task Commander()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        panierService.Commander(codeUser);
+        Navigation.NavigateTo("/Panier", true);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        articles = new();
+        articles = await panierService.AfficherPanier(codeUser);
+        foreach(var article in articles)
+        {
+            total += article.PrixUnitaire;
+        }
+    }
+}
+
+<div class="article-list">
+    @if (articles != null && articles.Any()) //Si la liste est non null et non vide
+    {
+        foreach (var article in articles)
+        {
+            <div class="article-item">
+                <img src=@article.LienImage alt="Alternate Text" class="article-image" />
+                <h2 class="titre">@article.Nom</h2>
+                <p class="prix">Prix: <span>@article.PrixUnitaire $</span></p>
+                <p class="vendeur">Vendeur: <span>@article.VendeurNavigation.Nom @article.VendeurNavigation.Prenom</span></p>
+                <div>
+                    <button @onclick="() => PanierRetirer(article.Code)" class="btn btn-danger">Retirer</button>
+                    <button @onclick="() => Details(article.Code)" class="btn btn-info">Détails</button>
+                </div>
+            </div>
+        }
+        <div>
+            <p class="prix">Total: $<span>@total</span></p>
+            <button @onclick="() => Commander()" class="btn btn-success">Commander</button>
+        </div>
+    }
+    else
+    {
+        <h2 class="text-black text-center">Votre panier est vide</h2>
+    }
+</div>

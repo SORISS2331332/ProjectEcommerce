@@ -1,0 +1,86 @@
+﻿@page "/Connexion"
+@rendermode InteractiveServer
+@inject ConnexionService connect
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider CustomAuthProvider 
+
+
+
+
+<div class="R-container" id="R-container">
+    <div class="form-contain login-contain">
+        <!--On précise un nom pour le formulaire, le modèle utilisé qui est ici connexionModel et la fonction à appeler dans le OnValidSubmit-->
+        <EditForm FormName="Connexion" Model="@connexionModel" OnValidSubmit="@SeConnecter">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+            <h1>Connexion</h1>
+            @if (InfoEstCorrect == false)
+            {
+                <div class="alert alert-danger text-center  mt-2 mb-0 w-70" role="alert">
+                    @Message
+                </div>
+            }
+            <div class="inputForm">
+                <label class="labelForm">Email</label>
+                <InputText type="email"  @bind-Value="connexionModel.Email" required />
+            </div>
+            <div class="inputForm">
+                <label class="labelForm">Mot de passe</label>
+                <InputText type="password"  @bind-Value="connexionModel.Password" required />
+            </div>
+          
+            <p class="compte">Pas de compte ? <a href="/Inscription">S'inscrire ici</a></p>
+            <button class="button" type="submit">Se connecter</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    /*authenticationState est utilisé pour recueillir les infos de l'utilisateur authentifié comme son email et "role" enregistré lors de la connexion*/
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    [SupplyParameterFromForm]
+    private ConnexionModel connexionModel { get; set; } = new();
+    public string Message { get; set; }
+    public string reponse { get; set; }
+    private bool InfoEstCorrect = true;
+
+    private async Task SeConnecter()
+    {
+
+        try
+        {
+            reponse = await connect.OnPostAsync(connexionModel.Email, connexionModel.Password);
+            if (reponse == "Succès")
+            {
+                //Appel du service d'authentication pour authentifier et enregistrer une session pour l'utilisateur
+                await ((CustomAuthenticationStateProvider)CustomAuthProvider).UpdateAuthenticationState(new UserSession
+                    {
+                        UserName = connexionModel.Email,
+                        Role = "Connected"
+                    });
+                Nav.NavigateTo("/Accueil", true);
+
+            }
+            else
+            {
+                InfoEstCorrect = false;
+                Message = reponse;
+
+            }
+        }catch(Exception ex)
+        {
+            InfoEstCorrect = false;
+            Message = ex.Message; //Message de verrouillage de compte ou de mot de passe incorrect ou d'autre erreur de traitement
+        }
+    }
+   
+    public class ConnexionModel
+    {
+        
+        public string Email { get; set; } 
+
+        public string Password { get; set; } 
+    } 
+}

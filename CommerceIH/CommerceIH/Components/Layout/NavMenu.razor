@@ -1,0 +1,86 @@
+﻿
+@using CommerceIH.Authentication
+@inject AuthenticationStateProvider CustomAuthProvider
+@inject NavigationManager Navigation
+
+
+<header class="header">
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm  border-bottom box-shadow mb-3">
+        <div class="container">
+            <div><a class="navbar-brand logo" asp-area="" asp-page="/Accueil"><img src="/img/myLogo.webp" alt="Logo" /></a></div>
+            <button class="defile navbar-toggler " type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav flex-grow-1"> 
+                    <li class="nav-item mb-3">
+                        <a class="nav-link btn btn-outline-success" href="/Accueil">Accueil </a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link btn btn-outline-success"  href="/Contact">Contact</a>
+                    </li>                           
+                </ul>
+                <div class="col-md-6 mb-3">
+                        <EditForm class="d-flex" FormName="Rechercher" Model="@rechercheModel" OnValidSubmit="formSubmitted">
+                            <DataAnnotationsValidator/>
+                            <ValidationSummary/>
+                            <InputText class="form-control me-2" placeholder="Rechercher..." @bind-Value="rechercheModel.Input" required/>
+                            <button class="btn btn-outline-success" type="submit"><i class="fas fa-search text-white"></i></button>
+                        </EditForm>
+
+                </div>
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="ms-lg-5 user-container mb-3">
+                            <a class="navbar-brand logo "  href="/AfficherProfil">
+                                <img class="rounded-circle" src="/img/user.jpg" alt="Logo" />
+                                <span class="down-arrow">&#9661;</span>
+                                <span class="hover-text">Voir Profil</span>
+                            </a>
+                        </div>
+                        <div class="connexion mb-3">
+                            <a id="con" class="nav-link text-white border-2 btn btn-danger"  @onclick="Logout" >Déconnexion</a>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between connexion">
+                            <a id="con" class="nav-link text-white border-2 btn btn-outline-success" asp-area="" href="/Connexion">Se connecter</a>
+                        </div>
+                    </NotAuthorized>
+                   
+                </AuthorizeView>
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="panier mb-3">
+                            <a id="con" class="nav-link text-white border-2 btn btn-outline-success" href="/Panier">Panier</a>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+
+        </div>
+    </nav>
+</header>
+
+@code {
+    public class RechercheModel
+    {
+        public string Input { get; set; }
+    }
+
+    [SupplyParameterFromForm]
+    public RechercheModel rechercheModel { get; set; } = new();
+
+    private async Task Logout()
+    {
+        await ((CustomAuthenticationStateProvider)CustomAuthProvider).UpdateAuthenticationState(null);
+        Navigation.NavigateTo("/Accueil", true);
+    }
+
+    private async Task formSubmitted()
+    {
+        string pageRecherche = "/RechercheProd/" + rechercheModel.Input;
+        Navigation.NavigateTo(pageRecherche, true);
+    }
+}

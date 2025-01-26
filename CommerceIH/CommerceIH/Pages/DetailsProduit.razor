@@ -1,0 +1,41 @@
+﻿@page "/details/{code:int}"
+@inject DetailsProduitService details
+@inject PanierService panierService
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    public int code { get; set; }
+    private Article article { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var code_ = code;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        article = new();
+
+        article = await details.GetArticlesInfo(code);
+    }
+
+    private async Task PanierAjout(int codeArticle)
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        panierService.AjoutPanier(codeUser, codeArticle);
+    }
+}
+
+<div class="article-item">
+    <img src=@article.LienImage alt="Alternate Text" class="article-image" />
+    <h2 class="titre">@article.Nom</h2>
+    <p class="text-black">@article.ArticleDescription</p>
+    <p class="prix">Prix: <span>@article.PrixUnitaire $</span></p>
+    <p class="vendeur">Vendeur: <span>@article.VendeurNavigation.Nom @article.VendeurNavigation.Prenom</span></p>
+    <div>
+        <button @onclick="() => PanierAjout(article.Code)" class="btn btn-success">Ajouter au panier</button>
+    </div>
+</div>

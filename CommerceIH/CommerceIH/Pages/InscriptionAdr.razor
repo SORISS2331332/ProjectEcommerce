@@ -1,0 +1,38 @@
+﻿@page "/InscriptionAdr"
+@inject InscriptionSrvc inscription
+
+@code {
+    public class InscriptionAdrModel
+    {
+        public string CodePostal { get; set; }
+        public string CodeCivique { get; set; }
+        public string NoApartement { get; set; }
+        public string Rue { get; set; }
+        public string Ville { get; set; }
+        public string Pays { get; set; }
+    }
+
+    private void formSubmitted()
+    {
+
+    }
+
+    private InscriptionAdrModel inscriptionAdrModel { get; set; } = new();
+}
+
+<div class="R-container" id="R-container">
+    <div class="form-contain login-contain">
+        <EditForm FormName="InscriptionAdr" Model="@inscriptionAdrModel" OnSubmit="formSubmitted">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+            <h1>Adresse</h1>
+            <InputText placeholder="Code postal" @bind-Value="inscriptionAdrModel.CodePostal" required />
+            <InputText placeholder="Code civique" @bind-Value="inscriptionAdrModel.CodeCivique" required />
+            <InputText placeholder="No apartement" @bind-Value="inscriptionAdrModel.NoApartement" required />
+            <InputText placeholder="Rue" @bind-Value="inscriptionAdrModel.Rue" required />
+            <InputText placeholder="Ville" @bind-Value="inscriptionAdrModel.Ville" required />
+            <InputText placeholder="Pays" @bind-Value="inscriptionAdrModel.Pays" required />
+            <button class="button" type="submit">Continuer</button>
+        </EditForm>
+    </div>
+</div>

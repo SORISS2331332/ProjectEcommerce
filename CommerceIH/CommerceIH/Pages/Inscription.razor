@@ -1,0 +1,54 @@
+﻿@page "/Inscription"
+@rendermode InteractiveServer
+@inject InscriptionSrvc inscription
+@inject NavigationManager Nav
+
+@code {
+    public class InscriptionModel
+    {
+        public string Nom { get; set; }
+        public string Prenom { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
+    private async Task formSubmitted()
+    {
+        int retour = await inscription.InscriptionUser(inscriptionModel.Nom, inscriptionModel.Prenom, inscriptionModel.Email, inscriptionModel.Password);
+        if (retour != 1 && retour != -2)
+            Nav.NavigateTo("/Connexion");
+        else
+            Nav.NavigateTo("/Inscription");
+    }
+
+    [SupplyParameterFromForm]
+    private InscriptionModel inscriptionModel { get; set; } = new();
+    private string emailEx = "exemple@gmail.com";
+}
+
+<div class="R-container" id="R-container">
+    <div class="form-contain login-contain">
+        <EditForm FormName="Inscription" Model="@inscriptionModel" OnValidSubmit="formSubmitted">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
+            <h1>Inscription</h1>
+            <div class="inputForm">
+                <label class="labelForm">Nom</label>
+                <InputText class="inputTxt" placeholder="Nom" @bind-Value="inscriptionModel.Nom" required />
+            </div>
+            <div class="inputForm">
+                <label class="labelForm">Prenom</label>
+                <InputText class="inputTxt" placeholder="Prenom" @bind-Value="inscriptionModel.Prenom" required />
+            </div>
+            <div class="inputForm">
+                <label class="labelForm">Email</label>
+                <InputText class="inputTxt" type="email" placeholder="@emailEx" @bind-Value="inscriptionModel.Email" required />
+            </div>
+            <div class="inputForm">
+                <label class="labelForm">Mot de passe</label>
+                <InputText class="inputTxt" type="password" placeholder="Au moins 8 caractères" @bind-Value="inscriptionModel.Password" required />
+            </div>
+            <button class="button" type="submit">Continuer</button>
+        </EditForm>
+    </div>
+</div>

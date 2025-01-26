@@ -1,0 +1,87 @@
+﻿@page "/MesArticles"
+@inject ListeProduitService listeProduitService
+
+<h1 class="text-center text-wite mb-5">Mes Articles Listés</h1>
+
+<!-- Section des catégories -->
+<div class="categories">
+    <div class="category-buttons">
+        @foreach (var categorie in categories)
+        {
+            <button class="btn btn-outline-success  category-btn" @onclick="() => FiltrerArticles(categorie)">
+                @categorie
+            </button>
+        }
+    </div>
+</div>
+
+<!-- Liste des articles -->
+<div class="article-list">
+    @if (articles != null && articles.Any())
+    {
+        foreach (var article in articles)
+        {
+            <div class="article-item">
+                @if (article.LienImage != null)
+                {
+                    <img src="@article.LienImage" alt="Image de l'article" class="article-image" />
+                }
+                else
+                {
+                    <img src="~/img/myLogo.webp" alt="Image par défaut" class="article-image" />
+                }
+                <h2 class="titre">@article.Nom</h2>
+                <p class="prix">Prix: <span>@article.PrixUnitaire $</span></p>
+                <p class="vendeur">Vendeur: <span>@article.VendeurNavigation.Nom @article.VendeurNavigation.Prenom</span></p>
+                <div>
+                    <a href="/SupprimerProduit/@article.Code" class="btn btn-danger">Supprimer</a>
+                    <a href="/ModifierProduit/@article.Code" class="btn btn-primary">Modifier</a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <h2 class="text-center">Vous n'avez aucun article en ligne.</h2>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    private List<Article> articles;
+    private List<string> categories = new List<string>
+    {
+       "Tous","Électronique", "Mode", "Maison", "Jouets", "Sport et Loisirs", "Alimentation", "Livres", "Cosmétiques"
+    };
+    private string categorie = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+
+        // Chargement des articles de l'utilisateur connecté
+        articles = await listeProduitService.GetUtilisateurArticleAsync(email);
+    }
+
+    private void FiltrerArticles(string categorieSelectionne)
+    {
+        OnInitializedAsync();
+
+        categorie = categorieSelectionne;
+        if (!string.IsNullOrEmpty(categorie))
+        {
+            if (categorie != "Tous")
+            {
+                articles = articles.Where(a => a.Categorie == categorie).ToList();
+            }
+            else
+            {
+                articles = articles.ToList();
+            }
+        }
+       
+    }
+}

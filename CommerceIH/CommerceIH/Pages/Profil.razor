@@ -1,0 +1,85 @@
+﻿
+@page "/Profil"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject ProfilService profilService
+
+
+<!--Vu qu'on utilise des méthodes aysnchrones il faut placer le if pour gerer la page quand les données sont pas prêtes-->
+@if(utilisateurConnecte == null)
+{
+    <h2 class="text-black text-center">Page en chargement ...</h2>
+}
+else
+{
+    <PageTitle>Modifier mon Profil</PageTitle>
+
+
+    <div class="R-container" id="R-container">
+        <EditForm FormName="ProfilService" Model="utilisateurConnecte" OnValidSubmit="ModifierProfil">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group text-black">
+                <label for="nom">Nom</label>
+                <InputText id="nom" placeholder="@utilisateurConnecte.Nom" class="form-control" @bind-Value="utilisateurConnecte.Nom" />
+            </div>
+
+            <div class="form-group text-black">
+                <label for="prenom">Prénom</label>
+                <InputText id="prenom" class="form-control" @bind-Value="utilisateurConnecte.Prenom" />
+            </div>
+
+            <div class="form-group text-black">
+                <label for="email">Email</label>
+                <!--L'email est unique donc par defaut on ne permet pas de modification d'email-->
+                <InputText id="email" placeholder="@utilisateurConnecte.Courriel" class="form-control" @bind-Value="utilisateurConnecte.Courriel" disabled />
+            </div>
+
+            <div class="form-group text-black">
+                <label for="password">Mot de Passe </label>
+                <!--Ici on utilise une variable séparée pour le password car dans la BD le passsword est stocké en bytes alors qu'ici on veut récupérer 
+                    un string saisi par l'utilisateur'
+                -->
+                <InputText id="password" class="form-control" @bind-Value="motDePasse" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+            <a href="/AfficherProfil" class="btn btn-danger">Retour</a>
+        </EditForm>
+    </div>
+}
+
+@code {
+
+    /*authenticationState est utilisé pour recueillir les infos de l'utilisateur authentifié comme son email et "role" enregistré lors de la connexion*/
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    private Utilisateur utilisateurConnecte;
+    public string motDePasse ;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+
+        utilisateurConnecte = new();
+
+        //Récupération des informations de l'utilisateur connecté grâce à son email
+        utilisateurConnecte = await profilService.GetUtilisateurConnecte(email);
+        motDePasse = "";
+    }
+
+
+
+    private async Task ModifierProfil()
+    {
+        //Mise à jour des informations de l'utilisateur
+        await profilService.ModifierUtilisateurConnecte(utilisateurConnecte.Courriel,utilisateurConnecte.Nom, utilisateurConnecte.Prenom,motDePasse);
+
+        Navigation.NavigateTo("/AfficherProfil",true);  // Pour rediriger vers la même page après la mise à jour
+        
+    }
+}

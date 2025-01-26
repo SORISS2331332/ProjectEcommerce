@@ -1,0 +1,66 @@
+﻿@page "/AfficherProfil"
+@inject NavigationManager Navigation
+@inject ProfilService profilService
+
+
+<!--Vu qu'on utilise des méthodes aysnchrones il faut placer le if pour gerer la page quand les données sont pas prêtes-->
+@if(utilisateurConnecte == null)
+{
+    <h2 class="text-black text-center"> Page en chargement ...</h2>
+}
+else
+{
+    <section class="profil-container mb-5">
+        <div class="infos">
+            <div class="image">
+                <img src="/img/user.jpg" alt="Alternate Text" />
+            </div>
+            <div class="user-infos">
+                <h3>Mes Informations</h3>
+                <p><span>Nom : </span> @utilisateurConnecte.Nom</p>
+                <p><span>Prénom : </span> @utilisateurConnecte.Prenom</p>
+                <p><span>Courriel : </span> @utilisateurConnecte.Courriel</p>
+                @if (utilisateurConnecte.CodeAdresse != null)
+                {
+                    <p><span>Adresse : </span> @utilisateurConnecte.CodeAdresseNavigation.CodeCivique  @utilisateurConnecte.CodeAdresseNavigation.Rue 
+                        @utilisateurConnecte.CodeAdresseNavigation.Ville @utilisateurConnecte.CodeAdresseNavigation.Pays</p>
+                }
+                
+
+                <!--Ici, on peut accéder directement à l'adresse de l'utilisateur car Blazor crée des liens entre les tables connectées par clés
+                    étrangères grâces aux propriétés virtuelles présentes dans nos modèles
+                -->
+                <a class="Maj" href="/Profil">Mettre à Jour</a>
+            </div>
+        </div>
+        <div class="options">
+            <a href="/MesArticles">Voir mes articles</a>
+            <a href="/AjoutProduit">Ajouter un article</a>
+            <a href="/Commandes">Historique de Commandes</a>
+        </div>
+    </section>
+}
+@code {
+    /*authenticationState est utilisé pour recueillir les infos de l'utilisateur authentifié comme son email et "role" enregistré lors de la connexion*/
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private Utilisateur utilisateurConnecte;
+    public string motDePasse;
+    private bool isLoading = true;
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+
+        utilisateurConnecte = new(); 
+
+        //Récupération des informations de l'utilisateur connecté grâce à la fonction GetUtilisateurConnecte() definie dans le service ProfilService
+        utilisateurConnecte = await profilService.GetUtilisateurConnecte(email);
+        
+        motDePasse = "";
+    }
+
+
+}

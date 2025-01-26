@@ -1,0 +1,137 @@
+﻿<!--Déclaration du paramètre passé en get dans MesArticles (Modifier)-->
+
+@page "/ModifierProduit/{id:int}" 
+@inject AjoutProduitService ajoutProduitService
+@inject NavigationManager Nav
+
+<!--Vu qu'on utilise des méthodes aysnchrones il faut placer le if pour gerer la page quand les données sont pas prêtes-->
+
+@if(article == null)
+{
+    <h2 class="text-black text-center">Page en chargement ...</h2>
+}
+else
+{
+    <h1>Mettre à jour mon article</h1>
+    <div class="AjoutProduit w-100">
+
+        <!--Utilisation de bin-Value pour assigner directement les valeurs saisies en input aux propriétés de notre model qui est Article-->
+
+        <EditForm FormName="AjouterProduit" Model="@article" OnValidSubmit="Modifier" class="contact w-100">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label>Titre</label>
+                <InputText  class="form-control" @bind-Value="article.Nom" required />
+            </div>
+
+            <div class="mb-3">
+                <label>Description</label>
+                <InputText class="form-control" @bind-Value="article.ArticleDescription" required />
+            </div>
+
+            <div class="mb-3">
+                <label>Prix</label>
+                <InputNumber  class="form-control" @bind-Value="article.PrixUnitaire" required />
+            </div>
+
+            <div class="mb-3">
+                <label for="categorie">Catégorie </label>
+                <InputSelect class="form-control" @bind-Value="article.Categorie" required>
+                    <option value="@article.Categorie" selected>@article.Categorie</option>
+                    @foreach (var categorie in categories)
+                    {
+                        <option value="@categorie">@categorie</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label>Sous Catégorie </label>
+                <InputText class="form-control" @bind-Value="article.SousCategorie" required />
+            </div>
+            <div class="mb-3">
+                <label >Image du produit</label>
+                <InputFile id="image" class="form-control"  OnChange="ChargerImage" required />
+            </div>
+
+            <button type="submit" class="btn btn-success mb-2">Valider</button>
+            <a class="btn btn-danger" href="/AfficherProfil">Retour</a>
+        </EditForm>
+
+    </div>
+}
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    [Parameter]
+    public int Id { get; set; } //Récupération de l'id de l'article passé en get dans la page MesArticles
+
+    private Article article { get; set; }
+    private IBrowserFile imageChargee;
+
+    private async Task ChargerImage(InputFileChangeEventArgs e)
+    {
+        imageChargee = e.File;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    { 
+        article = new(); 
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+
+        //Appelle de la fonction qui récupère l'article dans le service AjouterProduitService
+        article = await ajoutProduitService.GetArticleAsync(Id, email);
+
+    }
+
+    // Liste des catégories disponibles pour la sélection
+    private List<string> categories = new()
+    {
+        "Électronique",
+        "Mode",
+        "Maison",
+        "Jouets",
+        "Sport et Loisirs",
+        "Alimentation",
+        "Livres",
+        "Cosmétiques"
+    };
+
+
+
+    public async Task Modifier()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        string lienImageChargee = null;
+        try
+        {
+            if (imageChargee != null)
+            {
+                // Un nom unique pour l'image
+                lienImageChargee = Path.Combine("img", $"{Guid.NewGuid()}_{imageChargee.Name}");
+
+                await ajoutProduitService.SauvegarderImage(imageChargee, lienImageChargee);
+                var cheminDossierImg = Path.Combine("wwwroot", article.LienImage);
+
+                File.Delete(cheminDossierImg);
+                article.LienImage = lienImageChargee;
+            }
+            //Appel de la fonction qui met à jour les informations l'article dans le service AjouterProduitService
+            await ajoutProduitService.ModifierArticle(Id,article);
+            Nav.NavigateTo("/MesArticles", true);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+
+
+    }
+   
+}

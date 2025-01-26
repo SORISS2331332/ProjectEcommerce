@@ -1,0 +1,39 @@
+﻿@page "/Commandes"
+@inject PanierService panierService
+@inject CommandesService commandesService
+@inject NavigationManager Navigation
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+    private List<Commande> commandes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+        var email = authState.User.Identity.Name;
+        int codeUser = panierService.RecupCodeUser(email);
+        commandes = new();
+
+        //Récupération avec la fonction GetUtilisateurArticleAsync() de tous les articles venus par l'utilisateur connecté
+        commandes = await commandesService.AfficherCommandes(codeUser);
+    }
+}
+
+<div class="article-list">
+    @if (commandes != null && commandes.Any()) //Si la liste est non null et non vide
+    {
+        foreach (var commande in commandes)
+        {
+            <div class="article-item">
+                <p class="titre">Date d'émission: <span>@commande.DateEmission</span></p>
+                <p class="titre">Date de livraison: <span>@commande.DateLivraison</span></p>
+                <p class="titre">Statut: <span>@commande.Statut</span></p>
+            </div>
+        }
+    }
+    else
+    {
+        <h2 class="text-black text-center">Vous n'avez aucune commande</h2>
+    }
+</div>

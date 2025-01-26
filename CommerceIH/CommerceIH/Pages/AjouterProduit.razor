@@ -1,0 +1,117 @@
+﻿@page "/AjoutProduit"
+@inject AjoutProduitService ajoutProduitService
+@inject NavigationManager Nav
+
+<h1>Mettre en ligne un article</h1>
+<div class="AjoutProduit  w-100">
+    <!-- Formulaire d'ajout du produit -->
+    <EditForm FormName="AjouterProduit" Model="@article" OnValidSubmit="Ajouter" class="contact w-100">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="inputForm mb-3 ">
+            <label>Titre</label>
+            <InputText id="titre" class="form-control" @bind-Value="article.Nom" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Description</label>
+            <InputText id="description" class="form-control" @bind-Value="article.ArticleDescription" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Prix</label>
+            <InputNumber id="prix" class="form-control" @bind-Value="article.PrixUnitaire" required />
+        </div>
+
+        <div class="mb-3">
+            <label>Catégorie</label>
+            <InputSelect id="categorie" class="form-control" @bind-Value="article.Categorie" required>
+
+                @foreach (var categorie in categories)
+                {
+                    if (categorie == "categories[0]")
+                    {
+                        <option value="@categories" selected="selected">@categorie</option> <!-- Valeur par défaut -->
+                    }
+                    else
+                    {
+                        <option value="@categorie">@categorie</option>
+                    }
+
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="souscat">Sous Catégorie</label>
+            <InputText id="souscat" class="form-control" @bind-Value="article.SousCategorie" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="image">Image du produit</label>
+            <InputFile id="image" class="form-control" OnChange="ChargerImage" required />
+        </div>
+
+        <button type="submit" class="btn btn-success mb-2">Valider</button>
+        <a class="btn btn-danger" href="/AfficherProfil">Retour</a>
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    [SupplyParameterFromForm]
+    private Article article { get; set; } = new();
+
+
+
+    // Liste des catégories disponibles pour la sélection
+    private List<string> categories = new()
+    {
+        "Électronique",
+        "Mode",
+        "Maison",
+        "Jouets",
+        "Sport et Loisirs",
+        "Alimentation",
+        "Livres",
+        "Cosmétiques"
+    };
+
+    // Variable pour stocker l'image téléchargée
+    private IBrowserFile Image;
+
+    private async Task ChargerImage(InputFileChangeEventArgs e)
+    {
+        Image = e.File;
+    }
+
+    public async Task Ajouter()
+    {
+        var authState = await authenticationState;
+        string lienImageChargee = null;
+        var email = authState.User.Identity.Name;
+        try
+        {
+            // Si une image a été sélectionnée, on la sauvegarde
+            if (Image != null)
+            {
+                // Un nom unique pour l'image
+                lienImageChargee = Path.Combine("img", $"{Guid.NewGuid()}_{Image.Name}");
+
+                await ajoutProduitService.SauvegarderImage(Image, lienImageChargee);
+                article.LienImage = lienImageChargee;
+            }
+
+            // Appelle de la fonction d'insertion de l'article dans la BD
+            await ajoutProduitService.AjouterArticle(article, email);
+            Nav.NavigateTo("/MesArticles", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}

@@ -1,0 +1,15 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+
+
+<AuthorizeView>
+    <Authorized>
+        <h1 class="text-black">Hello ! Vous êtes connecté</h1>
+    </Authorized>
+    <NotAuthorized>
+        <h1 class="text-black">Hello ! Vous n'êtes pas connecté</h1>
+    </NotAuthorized>
+</AuthorizeView>
+
